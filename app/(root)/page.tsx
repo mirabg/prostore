@@ -5,7 +5,7 @@ export const metadata = {
   title: "Home",
 };
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const Homepage = async () => {
   const latestProducts = await getLatestProducts();
