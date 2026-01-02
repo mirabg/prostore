@@ -1,7 +1,8 @@
-import { PrismaClient } from "@/lib/generated/prisma/client";
+import { PrismaClient } from "@/lib/generated/prisma";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import type { Prisma } from "@/lib/generated/prisma/client";
+
+console.log("PrismaClient imported:", typeof PrismaClient, PrismaClient);
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -10,41 +11,34 @@ if (!connectionString) {
 }
 
 declare global {
-  var prisma: ReturnType<typeof createPrismaClient> | undefined;
+  var prismaGlobal: PrismaClient | undefined;
+  var poolGlobal: Pool | undefined;
 }
 
-let prismaClientSingleton: ReturnType<typeof createPrismaClient>;
-
 function createPrismaClient() {
-  const pool = new Pool({ connectionString });
+  console.log("Creating Prisma client...");
+  const pool = globalThis.poolGlobal ?? new Pool({ connectionString });
+  if (!globalThis.poolGlobal) {
+    globalThis.poolGlobal = pool;
+  }
   const adapter = new PrismaPg(pool);
+  const client = new PrismaClient({ adapter });
 
-  return new PrismaClient({ adapter }).$extends({
-    result: {
-      product: {
-        price: {
-          compute(product: { price: Prisma.Decimal }) {
-            return product.price.toString();
-          },
-        },
-        rating: {
-          compute(product: { rating: Prisma.Decimal }) {
-            return product.rating.toString();
-          },
-        },
-      },
-    },
+  console.log("Prisma client created. Type:", typeof client);
+  console.log("Has user property:", "user" in client, typeof client.user);
+  console.log("Client keys:", Object.keys(client).slice(0, 10));
+
+  // Explicitly connect to ensure the client is ready
+  client.$connect().catch((err) => {
+    console.error("Failed to connect Prisma client:", err);
   });
+
+  return client;
 }
 
 // Singleton pattern to prevent multiple Prisma instances in development
-if (process.env.NODE_ENV === "production") {
-  prismaClientSingleton = createPrismaClient();
-} else {
-  if (!global.prisma) {
-    global.prisma = createPrismaClient();
-  }
-  prismaClientSingleton = global.prisma;
-}
+export const prisma = globalThis.prismaGlobal ?? createPrismaClient();
 
-export const prisma = prismaClientSingleton;
+if (process.env.NODE_ENV !== "production") {
+  globalThis.prismaGlobal = prisma;
+}
