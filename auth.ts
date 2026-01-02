@@ -3,7 +3,9 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/db/prisma";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compareSync } from "bcrypt-ts-edge";
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, User } from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { Adapter } from "next-auth/adapters";
 
 export const config = {
   pages: {
@@ -14,7 +16,7 @@ export const config = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, //30 days
   },
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     CredentialsProvider({
       credentials: {
@@ -47,7 +49,7 @@ export const config = {
               id: user.id,
               name: user.name,
               email: user.email,
-              role: user.role,
+              role: user.role || "user",
             };
           }
         }
@@ -59,12 +61,32 @@ export const config = {
     session({ session, user, trigger, token }) {
       // Set the user ID from the token
       session.user.id = token.sub!;
+      session.user.role = token.role as string;
+      session.user.name = token.name;
 
       // If there is an update, set the user name
       if (trigger === "update") {
         session.user.name = user.name;
       }
       return session;
+    },
+    async jwt({ token, user }: { token: JWT; user: User | null }) {
+      // Assign user fields to the token
+      if (user) {
+        token.role = user.role;
+
+        //If user has no name then use the email
+        if (user.name === "NO_NAME") {
+          token.name = user.email!.split("@")[0];
+
+          //Update the database to reflect the token name
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { name: token.name },
+          });
+        }
+      }
+      return token;
     },
   },
 } satisfies NextAuthConfig;

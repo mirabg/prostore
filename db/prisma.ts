@@ -26,7 +26,6 @@ function createPrismaClient() {
 
   console.log("Prisma client created. Type:", typeof client);
   console.log("Has user property:", "user" in client, typeof client.user);
-  console.log("Client keys:", Object.keys(client).slice(0, 10));
 
   // Explicitly connect to ensure the client is ready
   client.$connect().catch((err) => {
