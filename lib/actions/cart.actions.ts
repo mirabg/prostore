@@ -128,9 +128,9 @@ export async function addItemToCart(data: CartItem) {
 export async function getMyCart() {
   //Check for the cart cookie
   const sessionCartId = (await cookies()).get("sessionCartId")?.value;
-  //TESTING
+
   if (!sessionCartId) {
-    throw new Error("Cart session not found");
+    return undefined;
   }
 
   //Get session and user id
@@ -153,4 +153,66 @@ export async function getMyCart() {
     shippingPrice: cart.shippingPrice.toString(),
     taxPrice: cart.taxPrice.toString(),
   });
+}
+
+export async function remoteItemFromCart(productId: string) {
+  try {
+    //Check for the cart cookie
+    const sessionCartId = (await cookies()).get("sessionCartId")?.value;
+
+    if (!sessionCartId) {
+      throw new Error("Cart session id not found");
+    }
+
+    const product = await prisma.product.findFirst({
+      where: { id: productId },
+    });
+
+    if (!product) throw new Error("Product not found");
+
+    const cart = await getMyCart();
+    if (!cart) {
+      throw new Error("Cart not found");
+    }
+
+    const exists = (cart.items as CartItem[]).find(
+      (x) => x.productId === productId
+    );
+
+    if (!exists) {
+      throw new Error("Item not found");
+    }
+
+    if (exists.qty === 1) {
+      //Remove from cart
+      cart.items = (cart.items as CartItem[]).filter(
+        (x) => x.productId != exists.productId
+      );
+    } else {
+      //Decrease qty
+      (cart.items as CartItem[]).find((x) => x.productId === productId)!.qty =
+        exists.qty - 1;
+    }
+
+    //Update cart in database
+    await prisma.cart.update({
+      where: { id: cart.id },
+      data: {
+        items: cart.items as Prisma.CartUpdateitemsInput[],
+        ...calcPrice(cart.items as CartItem[]),
+      },
+    });
+
+    revalidatePath(`/product/${product.slug}`);
+
+    return {
+      success: true,
+      message: `${product.name} was removed from cart`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: formatErrors(error),
+    };
+  }
 }
