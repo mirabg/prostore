@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { insertProductsSchema } from "@/lib/validators";
+import {
+  insertProductsSchema,
+  insertCartSchema,
+  cartItemSchema,
+} from "@/lib/validators";
 
 // Extend NextAuth types
 declare module "next-auth" {
@@ -45,3 +49,6 @@ export type Product = {
   numReviews: number;
   createdAt: Date;
 };
+
+export type Cart = z.infer<typeof insertCartSchema>;
+export type CartItem = z.infer<typeof cartItemSchema>;

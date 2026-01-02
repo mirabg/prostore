@@ -21,7 +21,9 @@ export function formatNumberWithDecimal(num: number): string {
 export async function formatErrors(error: any) {
   if (error.name === "ZodError") {
     //handle zod error
-    const fieldErrors = error.issues.map((issue: any) => issue.message);
+    const fieldErrors = error.issues.map(
+      (issue: { message: string }) => issue.message
+    );
     return fieldErrors.join(". ");
   } else if (
     error.name === "PrismaClientKnownRequestError" &&
@@ -38,5 +40,16 @@ export async function formatErrors(error: any) {
     return typeof error.message === "string"
       ? error.message
       : JSON.stringify(error.message);
+  }
+}
+
+//Round number to 2 decimal places
+export function round2(value: number | string) {
+  if (typeof value === "number") {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+  } else if (typeof value === "string") {
+    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+  } else {
+    throw new Error("Value is not a number or string");
   }
 }

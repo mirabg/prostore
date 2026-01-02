@@ -6,12 +6,10 @@ import { compareSync } from "bcrypt-ts-edge";
 import type { NextAuthConfig, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import type { Adapter } from "next-auth/adapters";
+import { authConfig } from "./auth.config";
 
 export const config = {
-  pages: {
-    signIn: "/sign-in",
-    error: "/sign-in",
-  },
+  ...authConfig,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, //30 days
