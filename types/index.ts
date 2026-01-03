@@ -1,12 +1,12 @@
 import { z } from "zod";
 import {
-  insertProductsSchema,
   insertCartSchema,
   cartItemSchema,
   shippingAddressSchema,
   insertOrderItemSchema,
   insertOrderSchema,
 } from "@/lib/validators";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 // Extend NextAuth types
 declare module "next-auth" {
@@ -56,14 +56,28 @@ export type Product = {
 export type Cart = z.infer<typeof insertCartSchema>;
 export type CartItem = z.infer<typeof cartItemSchema>;
 export type ShippingAddress = z.infer<typeof shippingAddressSchema>;
-export type OrderItem = z.infer<typeof insertOrderItemSchema>;
-export type Order = z.infer<typeof insertOrderSchema> & {
+export type OrderItem = Omit<
+  z.infer<typeof insertOrderItemSchema>,
+  "price" | "qty"
+> & {
+  price: Prisma.Decimal;
+  qty: number;
+  orderId: string;
+};
+export type Order = Omit<
+  z.infer<typeof insertOrderSchema>,
+  "itemsPrice" | "shippingPrice" | "taxPrice" | "totalPrice"
+> & {
   id: string;
   createdAt: Date;
-  isPaid: Boolean;
+  isPaid: boolean;
   paidAt: Date | null;
-  isDelivered: Boolean;
+  isDelivered: boolean;
   deliveredAt: Date | null;
+  itemsPrice: Prisma.Decimal;
+  shippingPrice: Prisma.Decimal;
+  taxPrice: Prisma.Decimal;
+  totalPrice: Prisma.Decimal;
   orderItems: OrderItem[];
   user: { name: string; email: string };
 };
