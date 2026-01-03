@@ -7,6 +7,7 @@ import type { NextAuthConfig, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import type { Adapter } from "next-auth/adapters";
 import { authConfig } from "./auth.config";
+import { cookies } from "next/headers";
 
 export const config = {
   ...authConfig,
@@ -68,9 +69,18 @@ export const config = {
       }
       return session;
     },
-    async jwt({ token, user }: { token: JWT; user: User | null }) {
+    async jwt({
+      token,
+      user,
+      trigger,
+    }: {
+      token: JWT;
+      user: User | null;
+      trigger?: string;
+    }) {
       // Assign user fields to the token
       if (user) {
+        token.id = user.id;
         token.role = user.role;
 
         //If user has no name then use the email
@@ -82,6 +92,30 @@ export const config = {
             where: { id: user.id },
             data: { name: token.name },
           });
+        }
+
+        if (trigger === "signIn" || trigger === "signUp") {
+          const cookiesObject = await cookies();
+          const sessionCartId = cookiesObject.get("sessionCartId")?.value;
+
+          if (sessionCartId) {
+            const sessionCart = await prisma.cart.findFirst({
+              where: { sessionCartId },
+            });
+
+            if (sessionCart) {
+              //Delete current user cart
+              await prisma.cart.deleteMany({
+                where: { userId: user.id },
+              });
+
+              //Assign new cart
+              await prisma.cart.update({
+                where: { id: sessionCart.id },
+                data: { userId: user.id },
+              });
+            }
+          }
         }
       }
       return token;
