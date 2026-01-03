@@ -5,6 +5,7 @@ import {
   shippingAddressSchema,
   insertOrderItemSchema,
   insertOrderSchema,
+  paymentResultSchema,
 } from "@/lib/validators";
 import { Prisma } from "@/lib/generated/prisma/client";
 
@@ -81,3 +82,5 @@ export type Order = Omit<
   orderItems: OrderItem[];
   user: { name: string; email: string };
 };
+
+export type PaymentResult = z.infer<typeof paymentResultSchema>;
