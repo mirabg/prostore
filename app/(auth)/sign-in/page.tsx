@@ -1,4 +1,4 @@
-import { APP_NAME } from "@/app/lib/constants";
+import { APP_NAME } from "@/lib/constants";
 import {
   Card,
   CardContent,

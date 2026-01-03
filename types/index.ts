@@ -3,6 +3,7 @@ import {
   insertProductsSchema,
   insertCartSchema,
   cartItemSchema,
+  shippingAddressSchema,
 } from "@/lib/validators";
 
 // Extend NextAuth types
@@ -52,3 +53,4 @@ export type Product = {
 
 export type Cart = z.infer<typeof insertCartSchema>;
 export type CartItem = z.infer<typeof cartItemSchema>;
+export type ShippingAddress = z.infer<typeof shippingAddressSchema>;

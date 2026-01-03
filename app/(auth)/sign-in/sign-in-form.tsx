@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useActionState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { signInDefaultValues } from "@/app/lib/constants";
+import { signInDefaultValues } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { signInWithCredentials } from "@/lib/actions/user.actions";

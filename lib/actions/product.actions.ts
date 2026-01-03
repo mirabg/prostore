@@ -1,7 +1,7 @@
 "use server";
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "../utils";
-import { LATEST_PRODUCTS_LIMIT } from "@/app/lib/constants";
+import { LATEST_PRODUCTS_LIMIT } from "@/lib/constants";
 import { Product } from "@/types";
 
 export async function getLatestProducts() {
